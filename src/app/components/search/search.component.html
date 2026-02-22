@@ -1,0 +1,148 @@
+<div class="max-w-2xl mx-auto">
+  <div class="mb-8">
+    <h2 class="text-2xl font-semibold text-slate-800 tracking-tight">Search Companies</h2>
+    <p class="mt-1 text-slate-500">Extract leadership and asset data from mining companies</p>
+  </div>
+
+  <form (ngSubmit)="onSubmit()" class="space-y-5">
+    <div>
+      <label for="query" class="block text-sm font-medium text-slate-700 mb-1.5">
+        Company Names
+      </label>
+      <input
+        id="query"
+        type="text"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+        name="query"
+        placeholder="e.g. B2 Gold, Barrick, Vale"
+        class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm placeholder:text-slate-400 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
+      />
+      <p class="mt-1.5 text-sm text-slate-500">Enter company names separated by commas</p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <input
+        id="forceRefresh"
+        type="checkbox"
+        [ngModel]="forceRefresh()"
+        (ngModelChange)="forceRefresh.set($event)"
+        name="forceRefresh"
+        class="h-4 w-4 text-slate-900 border-slate-300 rounded focus:ring-slate-900"
+      />
+      <label for="forceRefresh" class="text-sm text-slate-600">
+        Force refresh (re-extract existing companies)
+      </label>
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="loading()"
+      class="w-full px-4 py-2.5 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+    >
+      @if (loading()) {
+        <span class="flex items-center justify-center gap-2">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Processing...
+        </span>
+      } @else {
+        <span>Search & Extract</span>
+      }
+    </button>
+  </form>
+
+  <!-- Processing States -->
+  @if (loading()) {
+    <div class="mt-8 p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="relative">
+          <svg class="animate-spin h-8 w-8 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-slate-900">{{ stageInfo.label }}</p>
+          <p class="text-sm text-slate-500">{{ stageInfo.description }}</p>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-slate-900 rounded-full transition-all duration-500 ease-out"
+          [style.width.%]="stageProgress"
+        ></div>
+      </div>
+
+      <!-- Stage indicators -->
+      <div class="mt-4 flex justify-between text-xs text-slate-400">
+        <span [class.text-slate-900]="currentStage() === 'searching'" [class.font-medium]="currentStage() === 'searching'">Search</span>
+        <span [class.text-slate-900]="currentStage() === 'extracting'" [class.font-medium]="currentStage() === 'extracting'">Extract</span>
+        <span [class.text-slate-900]="currentStage() === 'analyzing'" [class.font-medium]="currentStage() === 'analyzing'">Analyze</span>
+        <span [class.text-slate-900]="currentStage() === 'storing'" [class.font-medium]="currentStage() === 'storing'">Store</span>
+        <span [class.text-slate-900]="currentStage() === 'complete'" [class.font-medium]="currentStage() === 'complete'">Done</span>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <p class="text-red-700">{{ error() }}</p>
+    </div>
+  }
+
+  @if (results()) {
+    <div class="mt-8">
+      <h3 class="text-lg font-semibold text-slate-800 mb-4">Results</h3>
+
+      <div class="mb-5 flex gap-6 text-sm font-medium">
+        <span class="text-emerald-600">Successful: {{ results()!.successful }}</span>
+        <span class="text-red-600">Failed: {{ results()!.failed }}</span>
+        <span class="text-slate-500">Skipped: {{ results()!.skipped }}</span>
+      </div>
+
+      <div class="space-y-3">
+        @for (result of results()!.results; track result.company_name) {
+          <div
+            class="p-4 rounded-lg border transition-colors"
+            [class.border-emerald-200]="result.status === 'success'"
+            [class.bg-emerald-50]="result.status === 'success'"
+            [class.border-red-200]="result.status === 'failed'"
+            [class.bg-red-50]="result.status === 'failed'"
+            [class.border-slate-200]="result.status === 'skipped'"
+            [class.bg-slate-50]="result.status === 'skipped'"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-medium text-slate-900">{{ result.company_name }}</p>
+                @if (result.status === 'success') {
+                  <p class="text-sm text-slate-600 mt-0.5">
+                    {{ result.leaders_count }} leaders, {{ result.assets_count }} assets
+                  </p>
+                }
+                @if (result.status === 'failed' && result.error) {
+                  <p class="text-sm text-red-600 mt-0.5">{{ result.error }}</p>
+                }
+                @if (result.status === 'skipped') {
+                  <p class="text-sm text-slate-500 mt-0.5">Already in database</p>
+                }
+              </div>
+              @if (result.company_id) {
+                <button
+                  (click)="viewCompany(result.company_id)"
+                  class="px-3 py-1.5 text-sm bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors"
+                >
+                  View Details
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

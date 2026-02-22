@@ -1,0 +1,317 @@
+<div class="max-w-6xl mx-auto">
+  @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-16">
+      <svg class="animate-spin h-10 w-10 text-slate-900 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="text-slate-600 font-medium">Loading company details...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="p-5 bg-red-50 border border-red-200 rounded-xl">
+      <p class="text-red-700 font-medium">{{ error() }}</p>
+      <button (click)="goBack()" class="mt-3 text-sm font-medium text-slate-900 hover:underline">
+        Back to companies
+      </button>
+    </div>
+  }
+
+  @if (!loading() && !error() && company()) {
+    <div>
+      <!-- Header -->
+      <div class="mb-10">
+        <button
+          (click)="goBack()"
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 mb-4 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to companies
+        </button>
+        <h1 class="text-4xl font-bold text-slate-900 tracking-tight">{{ company()!.name }}</h1>
+        @if (company()!.website) {
+          <a
+            [href]="company()!.website!"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-1.5 mt-2 text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+            {{ company()!.website }}
+          </a>
+        }
+
+        <!-- Stats summary -->
+        <div class="mt-6 flex gap-6">
+          <div class="px-4 py-3 bg-white border border-slate-200 rounded-xl">
+            <p class="text-2xl font-bold text-slate-900">{{ company()!.leaders.length }}</p>
+            <p class="text-sm text-slate-500">Leadership</p>
+          </div>
+          <div class="px-4 py-3 bg-white border border-slate-200 rounded-xl">
+            <p class="text-2xl font-bold text-slate-900">{{ company()!.assets.length }}</p>
+            <p class="text-sm text-slate-500">Assets</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="border-b border-slate-200 mb-8">
+        <nav class="flex gap-1">
+          <button
+            (click)="setTab('leaders')"
+            class="px-4 py-3 font-medium text-sm border-b-2 -mb-px transition-colors"
+            [class.border-slate-900]="activeTab() === 'leaders'"
+            [class.text-slate-900]="activeTab() === 'leaders'"
+            [class.border-transparent]="activeTab() !== 'leaders'"
+            [class.text-slate-500]="activeTab() !== 'leaders'"
+            [class.hover:text-slate-700]="activeTab() !== 'leaders'"
+          >
+            Leadership
+          </button>
+          <button
+            (click)="setTab('assets')"
+            class="px-4 py-3 font-medium text-sm border-b-2 -mb-px transition-colors"
+            [class.border-slate-900]="activeTab() === 'assets'"
+            [class.text-slate-900]="activeTab() === 'assets'"
+            [class.border-transparent]="activeTab() !== 'assets'"
+            [class.text-slate-500]="activeTab() !== 'assets'"
+            [class.hover:text-slate-700]="activeTab() !== 'assets'"
+          >
+            Assets
+          </button>
+        </nav>
+      </div>
+
+      <!-- Leaders Tab -->
+      @if (activeTab() === 'leaders') {
+        @if (company()!.leaders.length === 0) {
+          <div class="text-center py-12 bg-white border border-slate-200 rounded-xl">
+            <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <p class="text-slate-500 font-medium">No leadership data available</p>
+          </div>
+        } @else {
+          <!-- Executives -->
+          @if (executives.length > 0) {
+            <div class="mb-10">
+              <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 bg-slate-900 rounded-full"></span>
+                Executives
+                <span class="text-slate-400 font-normal">({{ executives.length }})</span>
+              </h3>
+              <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                @for (leader of executives; track leader.id) {
+                  <div class="p-5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors">
+                    <div class="flex items-start gap-3">
+                      <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-semibold text-slate-600">{{ leader.name.charAt(0) }}</span>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <h4 class="font-semibold text-slate-900 truncate">{{ leader.name }}</h4>
+                        <p class="text-sm text-slate-500 truncate">{{ leader.title }}</p>
+                      </div>
+                    </div>
+                    @if (leader.expertise && leader.expertise.length > 0) {
+                      <div class="mt-4 flex flex-wrap gap-1.5">
+                        @for (skill of leader.expertise.slice(0, 3); track skill) {
+                          <span class="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-md">
+                            {{ skill }}
+                          </span>
+                        }
+                        @if (leader.expertise.length > 3) {
+                          <span class="px-2 py-1 text-xs font-medium bg-slate-50 text-slate-500 rounded-md">
+                            +{{ leader.expertise.length - 3 }}
+                          </span>
+                        }
+                      </div>
+                    }
+                    @if (leader.technical_summary && leader.technical_summary.length > 0) {
+                      <ul class="mt-4 space-y-1.5">
+                        @for (point of leader.technical_summary.slice(0, 2); track point) {
+                          @if (point && point.trim()) {
+                            <li class="text-sm text-slate-600 flex items-start gap-2">
+                              <span class="w-1 h-1 bg-slate-400 rounded-full mt-2 flex-shrink-0"></span>
+                              <span class="line-clamp-2">{{ point }}</span>
+                            </li>
+                          }
+                        }
+                      </ul>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Board Members -->
+          @if (boardMembers.length > 0) {
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                Board Members
+                <span class="text-slate-400 font-normal">({{ boardMembers.length }})</span>
+              </h3>
+              <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                @for (leader of boardMembers; track leader.id) {
+                  <div class="p-5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors">
+                    <div class="flex items-start gap-3">
+                      <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-semibold text-slate-500">{{ leader.name.charAt(0) }}</span>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <h4 class="font-semibold text-slate-900 truncate">{{ leader.name }}</h4>
+                        <p class="text-sm text-slate-500 truncate">{{ leader.title }}</p>
+                      </div>
+                    </div>
+                    @if (leader.expertise && leader.expertise.length > 0) {
+                      <div class="mt-4 flex flex-wrap gap-1.5">
+                        @for (skill of leader.expertise.slice(0, 3); track skill) {
+                          <span class="px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-md">
+                            {{ skill }}
+                          </span>
+                        }
+                        @if (leader.expertise.length > 3) {
+                          <span class="px-2 py-1 text-xs font-medium bg-slate-50 text-slate-500 rounded-md">
+                            +{{ leader.expertise.length - 3 }}
+                          </span>
+                        }
+                      </div>
+                    }
+                    @if (leader.technical_summary && leader.technical_summary.length > 0) {
+                      <ul class="mt-4 space-y-1.5">
+                        @for (point of leader.technical_summary.slice(0, 2); track point) {
+                          @if (point && point.trim()) {
+                            <li class="text-sm text-slate-600 flex items-start gap-2">
+                              <span class="w-1 h-1 bg-slate-400 rounded-full mt-2 flex-shrink-0"></span>
+                              <span class="line-clamp-2">{{ point }}</span>
+                            </li>
+                          }
+                        }
+                      </ul>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      }
+
+      <!-- Assets Tab -->
+      @if (activeTab() === 'assets') {
+        @if (company()!.assets.length === 0) {
+          <div class="text-center py-12 bg-white border border-slate-200 rounded-xl">
+            <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <p class="text-slate-500 font-medium">No asset data available</p>
+          </div>
+        } @else {
+          <!-- Operating Assets -->
+          @if (operatingAssets.length > 0) {
+            <div class="mb-10">
+              <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                Operating
+                <span class="text-slate-400 font-normal">({{ operatingAssets.length }})</span>
+              </h3>
+              <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                <table class="min-w-full">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Commodities</th>
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Location</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (asset of operatingAssets; track asset.id) {
+                      <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-5 py-4">
+                          <span class="font-medium text-slate-900">{{ asset.name }}</span>
+                        </td>
+                        <td class="px-5 py-4">
+                          @if (asset.commodity && asset.commodity.length > 0) {
+                            <div class="flex flex-wrap gap-1.5">
+                              @for (c of asset.commodity; track c) {
+                                <span class="px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-md">{{ c }}</span>
+                              }
+                            </div>
+                          } @else {
+                            <span class="text-slate-400">-</span>
+                          }
+                        </td>
+                        <td class="px-5 py-4 text-sm text-slate-600">
+                          @if (asset.country) {
+                            {{ asset.town ? asset.town + ', ' : '' }}{{ asset.state_province ? asset.state_province + ', ' : '' }}{{ asset.country }}
+                          } @else {
+                            <span class="text-slate-400">-</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          <!-- Developing Assets -->
+          @if (developingAssets.length > 0) {
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                Developing
+                <span class="text-slate-400 font-normal">({{ developingAssets.length }})</span>
+              </h3>
+              <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                <table class="min-w-full">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Commodities</th>
+                      <th class="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Location</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (asset of developingAssets; track asset.id) {
+                      <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-5 py-4">
+                          <span class="font-medium text-slate-900">{{ asset.name }}</span>
+                        </td>
+                        <td class="px-5 py-4">
+                          @if (asset.commodity && asset.commodity.length > 0) {
+                            <div class="flex flex-wrap gap-1.5">
+                              @for (c of asset.commodity; track c) {
+                                <span class="px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-md">{{ c }}</span>
+                              }
+                            </div>
+                          } @else {
+                            <span class="text-slate-400">-</span>
+                          }
+                        </td>
+                        <td class="px-5 py-4 text-sm text-slate-600">
+                          @if (asset.country) {
+                            {{ asset.town ? asset.town + ', ' : '' }}{{ asset.state_province ? asset.state_province + ', ' : '' }}{{ asset.country }}
+                          } @else {
+                            <span class="text-slate-400">-</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  }
+</div>
