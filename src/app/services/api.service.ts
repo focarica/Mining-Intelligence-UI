@@ -17,7 +17,7 @@ export class ApiService {
   private readonly http = inject(HttpClient);
   // Using the localhost base url since this is what was there initially but maybe it should be railway?
   // Let's check where the API is hosted locally. You mentioned seeing logs.
-  private readonly baseUrl = 'http://localhost:8000/api';
+  private readonly baseUrl = 'https://mining-intelligence-pipeline-production.up.railway.app/api';
 
   getCompanies(): Observable<Company[]> {
     return this.http.get<Company[]>(`${this.baseUrl}/companies`);
