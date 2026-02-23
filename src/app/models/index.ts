@@ -53,3 +53,20 @@ export interface SearchRequest {
   query: string;
   force_refresh: boolean;
 }
+
+export interface CompanyQnARequest {
+  question: string;
+}
+
+export interface CompanyQnACitation {
+  leader_name: string;
+  title: string;
+  expertise: string[];
+  document_type: string;
+  source_url: string;
+}
+
+export interface CompanyQnAResponse {
+  answer: string;
+  citations: CompanyQnACitation[];
+}
