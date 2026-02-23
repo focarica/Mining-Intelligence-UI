@@ -4,25 +4,6 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SearchResponse } from '../../models';
 
-type ProcessingStage = 'idle' | 'searching' | 'extracting' | 'analyzing' | 'storing' | 'complete';
-
-interface StageInfo {
-  label: string;
-  description: string;
-}
-
-const PROCESSING_STAGES: Record<ProcessingStage, StageInfo> = {
-  idle: { label: '', description: '' },
-  searching: { label: 'Searching', description: 'Finding company websites...' },
-  extracting: { label: 'Extracting', description: 'Scraping web pages and content...' },
-  analyzing: { label: 'Analyzing', description: 'Identifying leadership and assets...' },
-  storing: { label: 'Storing', description: 'Saving to database...' },
-  complete: { label: 'Complete', description: 'Processing finished' },
-};
-
-const STAGE_ORDER: ProcessingStage[] = ['searching', 'extracting', 'analyzing', 'storing', 'complete'];
-const STAGE_DURATIONS = [3000, 8000, 12000, 3000]; // Duration for each stage in ms
-
 @Component({
   selector: 'app-search',
   standalone: true,
@@ -32,47 +13,43 @@ const STAGE_DURATIONS = [3000, 8000, 12000, 3000]; // Duration for each stage in
 export class SearchComponent implements OnDestroy {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  private stageInterval: ReturnType<typeof setTimeout> | null = null;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
+  private startTime: number = 0;
 
   query = signal('');
   forceRefresh = signal(false);
   loading = signal(false);
   error = signal<string | null>(null);
   results = signal<SearchResponse | null>(null);
-  currentStage = signal<ProcessingStage>('idle');
-
-  get stageInfo(): StageInfo {
-    return PROCESSING_STAGES[this.currentStage()];
-  }
-
-  get stageProgress(): number {
-    const idx = STAGE_ORDER.indexOf(this.currentStage());
-    if (idx === -1) return 0;
-    return ((idx + 1) / STAGE_ORDER.length) * 100;
-  }
+  elapsedSeconds = signal(0);
+  complete = signal(false);
 
   ngOnDestroy(): void {
-    this.clearStageInterval();
+    this.clearTimer();
   }
 
-  private clearStageInterval(): void {
-    if (this.stageInterval) {
-      clearTimeout(this.stageInterval);
-      this.stageInterval = null;
+  private clearTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
   }
 
-  private advanceStage(stageIndex: number): void {
-    if (stageIndex >= STAGE_ORDER.length - 1) {
-      return; // Don't auto-advance to 'complete', that happens on API response
-    }
+  private startTimer(): void {
+    this.startTime = Date.now();
+    this.elapsedSeconds.set(0);
+    this.timerInterval = setInterval(() => {
+      this.elapsedSeconds.set(Math.floor((Date.now() - this.startTime) / 1000));
+    }, 1000);
+  }
 
-    this.stageInterval = setTimeout(() => {
-      if (this.loading()) {
-        this.currentStage.set(STAGE_ORDER[stageIndex + 1]);
-        this.advanceStage(stageIndex + 1);
-      }
-    }, STAGE_DURATIONS[stageIndex]);
+  formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
   }
 
   onSubmit(): void {
@@ -85,8 +62,8 @@ export class SearchComponent implements OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     this.results.set(null);
-    this.currentStage.set('searching');
-    this.advanceStage(0);
+    this.complete.set(false);
+    this.startTimer();
 
     this.api
       .search({
@@ -95,19 +72,18 @@ export class SearchComponent implements OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          this.clearStageInterval();
-          this.currentStage.set('complete');
+          this.clearTimer();
+          this.complete.set(true);
+          this.results.set(response);
           setTimeout(() => {
-            this.results.set(response);
             this.loading.set(false);
-            this.currentStage.set('idle');
-          }, 500);
+            this.complete.set(false);
+          }, 1500);
         },
         error: (err) => {
-          this.clearStageInterval();
+          this.clearTimer();
           this.error.set(err.message || 'Search failed');
           this.loading.set(false);
-          this.currentStage.set('idle');
         },
       });
   }
