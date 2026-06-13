@@ -1,59 +1,87 @@
-# MiningIntelligenceUI
+# Mining Intelligence UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.2.
+The frontend for the [Mining Intelligence Pipeline](https://github.com/focarica/Mining-Intelligence-Pipeline) — an applied AI study project. Built with Angular 21, it provides a clean interface to trigger the extraction pipeline, browse company profiles, and run semantic Q&A queries over ingested documents.
 
-## Development server
+---
 
-To start a local development server, run:
+## Features
+
+- **Search & extract** — submit one or more company names to trigger the backend pipeline; displays per-company status (success / failed / skipped) with a live elapsed timer
+- **Company directory** — browse all ingested companies with links to their websites
+- **Company detail** — view structured leadership profiles (executives and board members) and mining assets with commodity and location data
+- **Semantic Q&A** — ask natural language questions about any company; the backend uses RAG (pgvector + Gemini) to return a grounded answer with source citations
+
+---
+
+## Tech Stack
+
+| | Choice |
+|---|---|
+| Framework | Angular 21 |
+| Language | TypeScript 5.9 |
+| State | Angular Signals |
+| Styling | Tailwind CSS 4 |
+| Testing | Vitest |
+| Package manager | npm |
+
+Angular Signals replace RxJS-heavy patterns for local component state, keeping reactivity explicit and lightweight.
+
+---
+
+## Project Structure
+
+```
+src/app/
+├── components/
+│   ├── search/          # Pipeline trigger + results display
+│   ├── companies/       # Company list table
+│   └── company-detail/  # Leader profiles, asset table, Q&A chat
+├── services/
+│   └── api.service.ts   # Typed HTTP client for all backend calls
+├── models/
+│   └── index.ts         # TypeScript interfaces (Company, Leader, Asset, Q&A)
+├── app.routes.ts        # Route definitions
+└── app.config.ts        # Angular application config
+```
+
+Routes:
+
+| Path | Component |
+|---|---|
+| `/search` | Search and trigger extraction |
+| `/companies` | Browse all companies |
+| `/companies/:id` | Company detail with Q&A |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- The [Mining Intelligence Pipeline](https://github.com/focarica/Mining-Intelligence-Pipeline) backend running on port 8000
+
+### Install and run
 
 ```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open `http://localhost:4200`.
 
-## Code scaffolding
+The API base URL is set in `src/app/services/api.service.ts`. By default it points to `http://localhost:8000/api` for local development.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+### Build
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Production artifacts are output to `dist/`.
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Tests
 
 ```bash
 ng test
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
